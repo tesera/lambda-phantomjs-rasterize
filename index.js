@@ -1,18 +1,32 @@
 'use strict';
+const fs = require('fs');
 const path = require('path');
-const phantomjsLambdaPack = require('phantomjs-lambda-pack');
-const exec = phantomjsLambdaPack.exec;
+const execFile = require('child_process').execFile;
 
-// exports.handler = (event, context, callback) => {
-    exec([path.resolve('rasterize.js'), 'http://localhost:3000/land-cover/human-footprint/energy', 'export.png', '2550px*1300px'], (error, stdout, stderr) => {
+const postProcessResource = (resource, fn) => {
+    let ret = null;
+    if (resource) {
+        if (fn) {
+            ret = fn(resource);
+        }
+        try {
+            fs.unlinkSync(resource);
+        } catch (err) {
+            // Ignore
+        }
+    }
+    return ret;
+};
+
+exports.handler = (event, context, callback) => {
+    console.log(event);
+    execFile(path.resolve("phantomjs-linux"), [path.resolve('rasterize.js'), 'http://dev.abmi-map-portal.s3-website-us-east-1.amazonaws.com/land-cover/human-footprint/energy', '/tmp/export.png', '2550px*1300px'], (error, stdout, stderr) => {
         if (error) {
             console.error(`exec error: ${error}`);
             return;
         }
 
-        console.log(`phantom version: ${stdout}`);
-        console.log(`Should have no error: ${stderr}`);
-
-        callback(error, 'fin!!');
+        callback(error, postProcessResource("/tmp/export.png", (file) => new Buffer(fs.readFileSync(file)).toString('base64')));
     });
-// };
+};
+
