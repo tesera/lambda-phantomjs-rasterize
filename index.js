@@ -21,7 +21,7 @@ const postProcessResource = (resource, fn) => {
 exports.handler = (event, context, callback) => {
     console.log(event);
     if(!event.url) return callback("Could not find URL to rasterize.");
-    execFile(path.resolve("phantomjs-linux"), [path.resolve('rasterize.js'), event.url, '/tmp/export.png', '2550px*1300px'], (error, stdout, stderr) => {
+    execFile(path.resolve("phantomjs-linux"), [path.resolve('rasterize.js'), event.url, '/tmp/export.png', '1440px*900px'], (error, stdout, stderr) => {
         if (error) {
             console.error(`exec error: ${error}`);
             return;
