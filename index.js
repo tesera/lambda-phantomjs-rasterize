@@ -3,31 +3,24 @@ const fs = require('fs');
 const path = require('path');
 const execFile = require('child_process').execFile;
 
-const postProcessResource = (resource, fn) => {
-    let ret = null;
-    if (resource) {
-        if (fn) {
-            ret = fn(resource);
-        }
-        try {
-            fs.unlinkSync(resource);
-        } catch (err) {
-            // Ignore
-        }
-    }
-    return ret;
-};
-
 exports.handler = (event, context, callback) => {
     console.log(event);
-    if(!event.url) return callback("Could not find URL to rasterize.");
-    execFile(path.resolve("phantomjs-linux"), [path.resolve('rasterize.js'), event.url, '/tmp/export.png', '1440px*900px'], (error, stdout, stderr) => {
-        if (error) {
-            console.error(`exec error: ${error}`);
-            return;
-        }
+    const phantomJSPath = path.resolve("phantomjs-linux");
+    const rasterizePath = path.resolve('rasterize.js');
+    const tmpImagePath = '/tmp/export.png';
+    
+    if(!event.params.querystring.url) return callback("Could not find URL to rasterize.");
 
-        callback(error, postProcessResource("/tmp/export.png", (file) => new Buffer(fs.readFileSync(file)).toString('base64')));
+    const url = decodeURIComponent(event.params.querystring.url);
+    const size = event.params.querystring.size || '1440px*900px';
+
+    execFile(phantomJSPath, [rasterizePath, url, tmpImagePath, size], (err, stdout, stderr) => {
+        if (err) {
+            console.error(`exec error: ${err}`);
+            return callback(err, {statusCode: 500, body: 'ERROR'});
+        } else {
+            callback(null, fs.readFileSync(tmpImagePath).toString('base64'));
+        }
     });
 };
 
