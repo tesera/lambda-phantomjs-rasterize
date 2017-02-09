@@ -14,10 +14,10 @@ exports.handler = (event, context, callback) => {
     if(!event.params.querystring.url) return callback("Could not find URL to rasterize.");
 
     const url = decodeURIComponent(event.params.querystring.url);
-    const screenSize = event.params.querystring.size ? decodeURIComponent(event.params.querystring.screenSize) : '1440px*900px';
-    const outWidth = event.params.querystring.outWidth ? event.params.querystring.outWidth.replace('px', '') : '';
+    const screenSize = event.params.querystring.sceenSize ? decodeURIComponent(event.params.querystring.screenSize) : '1440px*900px';
+    const outWidth = event.params.querystring.outWidth ? parseInt(event.params.querystring.outWidth.replace('px', '')) : 0;
 
-    execFile(phantomJSPath, [rasterizePath, url, exportedImagePath, size], (err, stdout, stderr) => {
+    execFile(phantomJSPath, [rasterizePath, url, exportedImagePath, screenSize], (err, stdout, stderr) => {
         let exported;
         if (err) {
             console.error(`exec error: ${err}`);
